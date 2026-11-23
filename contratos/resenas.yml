@@ -1,0 +1,103 @@
+fuente: resenas
+
+responsable: atencion_cliente
+
+llegada: archivos JSON Lines por lote en /Volumes/electrocasa_dev/default/vol_landing/resenas/
+
+frecuencia_esperada: por_lotes
+
+llave: resena_id
+
+columnas:
+
+  - nombre: resena_id
+    tipo: string
+    nulo: false
+    descripcion: identificador unico de la resena
+
+  - nombre: producto_id
+    tipo: string
+    nulo: false
+    descripcion: identificador del producto evaluado
+
+  - nombre: fecha_resena
+    tipo: date
+    nulo: false
+    descripcion: fecha de registro de la resena
+
+  - nombre: calificacion
+    tipo: integer
+    nulo: false
+    descripcion: puntuacion otorgada por el cliente
+    regla: valor entre 1 y 5
+
+  - nombre: comentario
+    tipo: string
+    nulo: true
+    descripcion: comentario ingresado por el cliente
+
+  - nombre: tags
+    tipo: array<string>
+    nulo: true
+    descripcion: etiquetas asociadas a la resena
+
+  - nombre: respuestas
+    tipo: array<struct<autor:string,texto:string,fecha:string>>
+    nulo: true
+    descripcion: respuestas de atencion al cliente asociadas a la resena
+
+  - nombre: metadata
+    tipo: variant
+    nulo: true
+    descripcion: metadata variable proveniente del origen de la resena
+
+reglas_de_calidad:
+
+  - nombre: resena_id_obligatorio
+    condicion: resena_id IS NOT NULL
+    politica: drop
+    destino_rechazos: silver.cuarentena
+
+  - nombre: producto_id_obligatorio
+    condicion: producto_id IS NOT NULL
+    politica: drop
+    destino_rechazos: silver.cuarentena
+
+  - nombre: fecha_resena_obligatoria
+    condicion: fecha_resena IS NOT NULL
+    politica: drop
+    destino_rechazos: silver.cuarentena
+
+  - nombre: calificacion_valida
+    condicion: calificacion BETWEEN 1 AND 5
+    politica: drop
+    destino_rechazos: silver.cuarentena
+
+problemas_conocidos:
+
+  - metadata puede variar de estructura dependiendo del origen
+
+  - tags puede contener multiples valores o venir vacio
+
+  - respuestas puede contener cero una o multiples respuestas
+
+  - pueden existir resenas asociadas a productos que no existen en el catalogo
+
+  - pueden existir registros reprocesados en lotes posteriores
+
+tratamiento_metadata:
+
+  tipo_destino: variant
+
+  descripcion: >
+    Se utilizara VARIANT para conservar la estructura flexible
+    de metadata sin perder informacion cuando cambie su formato.
+
+referencias_huerfanas:
+
+  producto_no_existente: cuarentena
+
+  descripcion: >
+    Las resenas cuyo producto_id no exista en el catalogo
+    no participaran en los calculos Gold y seran registradas
+    como registros rechazados.

@@ -1,0 +1,25 @@
+bundle:
+  name: electrocasa-lakehouse
+
+include:
+  - resources/*.yml
+
+variables:
+  catalog:
+    description: Catalogo Unity Catalog para ElectroCasa
+    default: electrocasa_dev
+
+targets:
+
+  dev:
+    mode: development
+    default: true
+
+    variables:
+      catalog: electrocasa_dev
+
+  prod:
+    mode: production
+
+    variables:
+      catalog: electrocasa_prod

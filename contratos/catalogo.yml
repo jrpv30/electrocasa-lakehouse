@@ -1,0 +1,76 @@
+fuente: catalogo
+
+responsable: area_comercial
+
+llegada: archivos JSON snapshot en /Volumes/electrocasa_dev/default/vol_landing/catalogo/
+
+frecuencia_esperada: por_snapshot
+
+llave: producto_id
+
+columnas:
+
+  - nombre: producto_id
+    tipo: string
+    nulo: false
+    descripcion: identificador unico del producto
+
+  - nombre: nombre_producto
+    tipo: string
+    nulo: false
+    descripcion: nombre comercial del producto
+
+  - nombre: categoria
+    tipo: string
+    nulo: false
+    descripcion: categoria comercial del producto
+    regla: normalizar variantes de escritura
+
+  - nombre: marca
+    tipo: string
+    nulo: true
+    descripcion: marca del producto
+
+  - nombre: precio_lista
+    tipo: decimal(12,2)
+    nulo: false
+    descripcion: precio de lista del producto
+    regla: mayor a 0
+
+  - nombre: activo
+    tipo: boolean
+    nulo: false
+    descripcion: indica si el producto se encuentra activo en el catalogo
+
+reglas_de_calidad:
+
+  - nombre: producto_id_obligatorio
+    condicion: producto_id IS NOT NULL
+    politica: drop
+    destino_rechazos: silver.cuarentena
+
+  - nombre: precio_lista_valido
+    condicion: precio_lista > 0
+    politica: drop
+    destino_rechazos: silver.cuarentena
+
+problemas_conocidos:
+
+  - precio_lista puede venir como texto y requerir conversion a decimal
+
+  - precio_lista puede contener simbolos de moneda o formatos no estandar
+
+  - categoria puede presentar diferencias de mayusculas minusculas o variantes de escritura
+
+  - un mismo producto puede aparecer nuevamente en snapshots posteriores
+
+tratamiento_snapshot:
+
+  tipo: snapshot_completo
+
+  decision_productos_inactivos: conservar
+
+  descripcion: >
+    Silver conservara productos activos e inactivos.
+    El campo activo permitira identificar productos descontinuados
+    sin perder el historial necesario para las consultas analiticas.

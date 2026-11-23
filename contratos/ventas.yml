@@ -1,0 +1,90 @@
+fuente: ventas
+
+responsable: area_comercial
+
+llegada: archivos CSV por lote en /Volumes/electrocasa_dev/default/vol_landing/ventas/
+
+frecuencia_esperada: por_lotes
+
+llave: venta_id
+
+columnas:
+
+  - nombre: venta_id
+    tipo: string
+    nulo: false
+    descripcion: identificador unico de la venta
+
+  - nombre: sucursal_id
+    tipo: string
+    nulo: false
+    descripcion: sucursal asociada a la venta
+
+  - nombre: producto_id
+    tipo: string
+    nulo: false
+    descripcion: identificador del producto vendido
+
+  - nombre: vendedor_id
+    tipo: string
+    nulo: true
+    descripcion: identificador del vendedor
+    regla: puede ser nulo para ventas ecommerce
+
+  - nombre: cantidad
+    tipo: integer
+    nulo: false
+    descripcion: cantidad de unidades vendidas
+    regla: mayor a 0
+
+  - nombre: monto_total
+    tipo: decimal(12,2)
+    nulo: false
+    descripcion: monto total de la venta
+    regla: mayor a 0
+
+  - nombre: metodo_pago
+    tipo: string
+    nulo: false
+    descripcion: metodo de pago utilizado
+
+  - nombre: fecha_venta
+    tipo: date
+    nulo: false
+    descripcion: fecha en que se realizo la venta
+
+  - nombre: canal
+    tipo: string
+    nulo: false
+    descripcion: canal de venta
+    regla: debe representar tienda fisica o ecommerce
+
+reglas_de_calidad:
+
+  - nombre: venta_id_obligatorio
+    condicion: venta_id IS NOT NULL
+    politica: drop
+    destino_rechazos: silver.cuarentena
+
+  - nombre: monto_positivo
+    condicion: monto_total > 0
+    politica: drop
+    destino_rechazos: silver.cuarentena
+
+  - nombre: cantidad_positiva
+    condicion: cantidad > 0
+    politica: drop
+    destino_rechazos: silver.cuarentena
+
+  - nombre: fecha_venta_obligatoria
+    condicion: fecha_venta IS NOT NULL
+    politica: drop
+    destino_rechazos: silver.cuarentena
+
+problemas_conocidos:
+
+  - monto_total puede requerir normalizacion del formato decimal
+
+  - metodo_pago presenta diferencias de mayusculas minusculas y abreviaturas
+
+  - vendedor_id puede ser nulo dependiendo del canal de venta

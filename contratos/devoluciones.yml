@@ -1,0 +1,113 @@
+fuente: devoluciones
+
+responsable: area_comercial
+
+llegada: archivos CSV por lote en /Volumes/electrocasa_dev/default/vol_landing/devoluciones/
+
+frecuencia_esperada: por_lotes
+
+llave: devolucion_id
+
+columnas:
+
+  - nombre: devolucion_id
+    tipo: string
+    nulo: false
+    descripcion: identificador unico de la devolucion
+
+  - nombre: venta_id
+    tipo: string
+    nulo: false
+    descripcion: identificador de la venta original
+
+  - nombre: producto_id
+    tipo: string
+    nulo: false
+    descripcion: identificador del producto devuelto
+
+  - nombre: sucursal_id
+    tipo: string
+    nulo: false
+    descripcion: sucursal asociada a la devolucion
+
+  - nombre: fecha_devolucion
+    tipo: date
+    nulo: false
+    descripcion: fecha en la que se registro la devolucion
+
+  - nombre: motivo
+    tipo: string
+    nulo: true
+    descripcion: motivo informado para la devolucion
+
+  - nombre: monto_reembolso
+    tipo: decimal(12,2)
+    nulo: false
+    descripcion: monto reembolsado al cliente
+    regla: mayor o igual a 0 y no mayor al monto de la venta original
+
+reglas_de_calidad:
+
+  - nombre: devolucion_id_obligatorio
+    condicion: devolucion_id IS NOT NULL
+    politica: drop
+    destino_rechazos: silver.cuarentena
+
+  - nombre: venta_id_obligatorio
+    condicion: venta_id IS NOT NULL
+    politica: drop
+    destino_rechazos: silver.cuarentena
+
+  - nombre: producto_id_obligatorio
+    condicion: producto_id IS NOT NULL
+    politica: drop
+    destino_rechazos: silver.cuarentena
+
+  - nombre: fecha_devolucion_obligatoria
+    condicion: fecha_devolucion IS NOT NULL
+    politica: drop
+    destino_rechazos: silver.cuarentena
+
+  - nombre: monto_reembolso_no_negativo
+    condicion: monto_reembolso >= 0
+    politica: drop
+    destino_rechazos: silver.cuarentena
+
+  - nombre: monto_reembolso_no_supera_venta
+    condicion: monto_reembolso <= monto_total_venta
+    politica: drop
+    destino_rechazos: silver.cuarentena
+
+problemas_conocidos:
+
+  - monto_reembolso puede requerir normalizacion de formato decimal
+
+  - pueden existir devoluciones cuya venta_id no exista en la tabla de ventas
+
+  - pueden existir devoluciones asociadas a productos inexistentes en el catalogo
+
+  - pueden existir registros reprocesados en lotes posteriores
+
+validacion_con_ventas:
+
+  requiere_join: true
+
+  tabla_referencia: silver.ventas
+
+  campo_union: venta_id
+
+  descripcion: >
+    La validacion de monto_reembolso contra el monto de la venta original
+    requiere primero unir devoluciones con ventas.
+    La expectativa se aplicara sobre la vista resultante.
+
+referencias_huerfanas:
+
+  venta_no_existente: cuarentena
+
+  producto_no_existente: cuarentena
+
+  descripcion: >
+    Las devoluciones cuya venta o producto no existan en las fuentes
+    maestras no participaran en los calculos Gold y quedaran registradas
+    en la cuarentena.

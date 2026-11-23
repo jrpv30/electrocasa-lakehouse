@@ -1,0 +1,77 @@
+fuente: sucursales
+
+responsable: area_comercial
+
+llegada: archivo CSV unico en /Volumes/electrocasa_dev/default/vol_landing/sucursales/
+
+frecuencia_esperada: unica
+
+llave: sucursal_id
+
+columnas:
+
+  - nombre: sucursal_id
+    tipo: string
+    nulo: false
+    descripcion: identificador unico de la sucursal
+
+  - nombre: nombre
+    tipo: string
+    nulo: false
+    descripcion: nombre de la sucursal
+
+  - nombre: distrito
+    tipo: string
+    nulo: true
+    descripcion: distrito donde se encuentra ubicada la sucursal
+
+  - nombre: ciudad
+    tipo: string
+    nulo: false
+    descripcion: ciudad donde se encuentra ubicada la sucursal
+    regla: normalizar formato y casing
+
+  - nombre: region
+    tipo: string
+    nulo: false
+    descripcion: region geografica de la sucursal
+
+reglas_de_calidad:
+
+  - nombre: sucursal_id_obligatorio
+    condicion: sucursal_id IS NOT NULL
+    politica: drop
+    destino_rechazos: silver.cuarentena
+
+  - nombre: ciudad_obligatoria
+    condicion: ciudad IS NOT NULL
+    politica: drop
+    destino_rechazos: silver.cuarentena
+
+problemas_conocidos:
+
+  - ciudad puede presentar diferencias de mayusculas y minusculas
+
+  - distrito puede contener espacios adicionales o formatos inconsistentes
+
+  - nombre de sucursal puede presentar diferencias de escritura
+
+normalizacion:
+
+  ciudad:
+    tratamiento: estandarizar_casing
+    ejemplo: "lima -> Lima"
+
+  distrito:
+    tratamiento: trim
+
+  region:
+    tratamiento: trim
+
+tratamiento_fuente:
+
+  tipo: maestro_referencia
+
+  descripcion: >
+    Sucursales es una fuente de referencia utilizada para enriquecer
+    ventas, empleados y tablas Gold.

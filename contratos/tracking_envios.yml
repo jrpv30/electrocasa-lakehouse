@@ -1,0 +1,105 @@
+fuente: tracking_envios
+
+responsable: logistica
+
+llegada: Azure SQL Database mediante Lakeflow Connect query-based
+
+frecuencia_esperada: incremental
+
+tabla_destino_bronze: bronze.tracking_envios
+
+llave: evento_id
+
+configuracion_ingesta:
+
+  metodo: lakeflow_connect_query_based
+
+  cursor: fecha_modificacion
+
+  llave_primaria: evento_id
+
+  descripcion: >
+    La ingesta se realiza desde Azure SQL Database utilizando
+    Lakeflow Connect en modo query-based. fecha_modificacion
+    se utiliza como columna cursor para recuperar solo cambios
+    nuevos y evento_id como llave primaria del evento.
+
+columnas:
+
+  - nombre: evento_id
+    tipo: string
+    nulo: false
+    descripcion: identificador unico del evento de tracking
+
+  - nombre: fecha_modificacion
+    tipo: timestamp
+    nulo: false
+    descripcion: fecha y hora del cambio de estado del envio
+
+  - nombre: estado_entrega
+    tipo: string
+    nulo: false
+    descripcion: estado registrado para el envio
+    regla: debe normalizarse a un conjunto cerrado de estados
+
+reglas_de_calidad:
+
+  - nombre: evento_id_obligatorio
+    condicion: evento_id IS NOT NULL
+    politica: drop
+    destino_rechazos: silver.cuarentena
+
+  - nombre: fecha_modificacion_obligatoria
+    condicion: fecha_modificacion IS NOT NULL
+    politica: drop
+    destino_rechazos: silver.cuarentena
+
+  - nombre: estado_entrega_valido
+    condicion: "estado_entrega IN ('pendiente','en_transito','entregado','devuelto')"
+    politica: drop
+    destino_rechazos: silver.cuarentena
+
+problemas_conocidos:
+
+  - pueden existir mensajes reprocesados del mismo cambio de estado con distinto evento_id
+
+  - estado_entrega puede presentar diferencias de mayusculas minusculas o variantes de escritura
+
+  - pueden existir eventos asociados a una venta inexistente
+
+  - pueden existir multiples eventos para un mismo envio
+
+incrementalidad:
+
+  primera_ejecucion: cargar todos los eventos disponibles
+
+  segunda_ejecucion: no cargar filas nuevas si la fuente no cambio
+
+  evidencia_requerida: >
+    Registrar en README las dos ejecuciones del conector para
+    demostrar que fecha_modificacion funciona como cursor incremental.
+
+deduplicacion:
+
+  requerida: true
+
+  descripcion: >
+    Antes de calcular metricas Gold deben eliminarse mensajes
+    reprocesados que representen el mismo cambio de estado aunque
+    tengan diferente evento_id.
+
+referencias_huerfanas:
+
+  venta_no_existente: cuarentena
+
+  descripcion: >
+    Los eventos de tracking asociados a una venta inexistente
+    no participaran en los calculos Gold y quedaran registrados
+    como rechazados.
+
+observacion:
+
+  descripcion: >
+    Las columnas adicionales reales de la tabla de Azure SQL
+    se completaran en este contrato despues de revisar el schema
+    recibido por Lakeflow Connect.

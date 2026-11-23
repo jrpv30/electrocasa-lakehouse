@@ -1,0 +1,109 @@
+fuente: empleados
+
+responsable: recursos_humanos
+
+llegada: archivos CSV por lote en /Volumes/electrocasa_dev/default/vol_landing/empleados/
+
+frecuencia_esperada: por_lotes
+
+llave: id_empleado
+
+columnas:
+
+  - nombre: id_empleado
+    tipo: string
+    nulo: false
+    descripcion: identificador unico del empleado
+
+  - nombre: nombre
+    tipo: string
+    nulo: false
+    descripcion: nombre completo del empleado
+
+  - nombre: dni
+    tipo: string
+    nulo: false
+    descripcion: documento de identidad del empleado
+
+  - nombre: email
+    tipo: string
+    nulo: true
+    descripcion: correo electronico del empleado
+
+  - nombre: salario
+    tipo: decimal(12,2)
+    nulo: true
+    descripcion: salario registrado para el empleado
+
+  - nombre: sucursal_id
+    tipo: string
+    nulo: true
+    descripcion: sucursal asignada al empleado
+
+  - nombre: cargo
+    tipo: string
+    nulo: true
+    descripcion: cargo del empleado
+
+  - nombre: tipo_evento
+    tipo: string
+    nulo: false
+    descripcion: tipo de evento de recursos humanos
+    regla: normalizar a un conjunto cerrado de valores
+
+  - nombre: fecha_evento
+    tipo: date
+    nulo: false
+    descripcion: fecha efectiva del evento del empleado
+
+  - nombre: fecha_registro
+    tipo: timestamp
+    nulo: false
+    descripcion: fecha y hora en que el evento fue registrado en el sistema origen
+
+reglas_de_calidad:
+
+  - nombre: empleado_id_obligatorio
+    condicion: id_empleado IS NOT NULL
+    politica: drop
+    destino_rechazos: silver.cuarentena
+
+  - nombre: fecha_evento_obligatoria
+    condicion: fecha_evento IS NOT NULL
+    politica: drop
+    destino_rechazos: silver.cuarentena
+
+  - nombre: fecha_registro_obligatoria
+    condicion: fecha_registro IS NOT NULL
+    politica: drop
+    destino_rechazos: silver.cuarentena
+
+problemas_conocidos:
+
+  - un empleado puede aparecer varias veces debido a altas transferencias cambios de salario y bajas
+
+  - pueden existir eventos registrados en un lote posterior cuya fecha_evento corresponde a una fecha anterior
+
+  - pueden existir dos eventos del mismo empleado en la misma fecha
+
+  - tipo_evento puede presentar diferencias de mayusculas minusculas o variantes de escritura
+
+  - puede existir el mismo dni asociado a mas de un id_empleado
+
+  - salario puede contener valores fuera del rango esperado
+
+historizacion:
+
+  tipo: SCD2
+
+  clave_negocio: id_empleado
+
+  orden_eventos:
+    - fecha_evento
+    - fecha_registro
+
+  descripcion: >
+    Cada cambio del empleado genera una nueva version historica.
+    fecha_evento determina la vigencia efectiva y fecha_registro
+    permite resolver el orden cuando existen eventos del mismo dia
+    o eventos registrados tardíamente.
