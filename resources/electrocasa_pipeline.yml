@@ -1,6 +1,7 @@
 resources:
   pipelines:
     electrocasa_pipeline:
+
       name: electrocasa_pipeline_${bundle.target}
 
       catalog: ${var.catalog}
@@ -9,9 +10,12 @@ resources:
       serverless: true
       continuous: false
 
+      configuration:
+        electrocasa.catalog: ${var.catalog}
+
       libraries:
         - file:
             path: ../src/electrocasa/transformations/bronze.py
 
-      configuration:
-        electrocasa.catalog: ${var.catalog}
+        - file:
+            path: ../src/electrocasa/transformations/silver.py
