@@ -19,3 +19,6 @@ resources:
 
         - file:
             path: ../src/electrocasa/transformations/silver.py
+
+        - file:
+            path: ../src/electrocasa/transformations/gold.py
