@@ -22,3 +22,6 @@ resources:
 
         - file:
             path: ../src/electrocasa/transformations/gold.py
+
+        - file:
+            path: ../src/electrocasa/transformations/tracking.py
