@@ -1,0 +1,80 @@
+resources:
+  jobs:
+    electrocasa_job:
+
+      name: electrocasa_job_${bundle.target}
+
+      max_concurrent_runs: 1
+
+      queue:
+        enabled: true
+
+      email_notifications:
+        on_failure:
+          - jherson6@gmail.com
+
+      schedule:
+        quartz_cron_expression: "0 0 23 * * ?"
+        timezone_id: "America/Lima"
+        pause_status: UNPAUSED
+
+      tasks:
+
+        # ====================================================
+        # 1. COPY INTO
+        # ====================================================
+
+        - task_key: copy_into_bronze
+
+          notebook_task:
+            notebook_path: ../notebooks/01_copy_into.py
+
+          max_retries: 1
+          min_retry_interval_millis: 60000
+
+
+        # ====================================================
+        # 2. TRACKING - LAKEFLOW CONNECT
+        # ====================================================
+
+        - task_key: tracking_ingestion
+
+          depends_on:
+            - task_key: copy_into_bronze
+
+          pipeline_task:
+            pipeline_id: ${var.tracking_pipeline_id}
+            full_refresh: false
+
+
+        # ====================================================
+        # 3. PIPELINE MEDALLION
+        # ====================================================
+
+        - task_key: pipeline_medallion
+
+          depends_on:
+            - task_key: tracking_ingestion
+
+          pipeline_task:
+            pipeline_id: ${resources.pipelines.electrocasa_pipeline.id}
+            full_refresh: false
+
+
+        # ====================================================
+        # 4. VALIDACION FINAL
+        # ====================================================
+
+        - task_key: validacion_final
+
+          depends_on:
+            - task_key: pipeline_medallion
+
+          notebook_task:
+            notebook_path: ../notebooks/02_validacion.py
+
+            base_parameters:
+              catalog: ${var.catalog}
+
+          max_retries: 1
+          min_retry_interval_millis: 60000

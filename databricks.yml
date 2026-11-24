@@ -1,24 +1,36 @@
 bundle:
   name: electrocasa-lakehouse
 
+
 include:
   - resources/*.yml
 
+
 variables:
+
   catalog:
     description: Catalogo Unity Catalog para ElectroCasa
     default: electrocasa_dev
 
+  tracking_pipeline_id:
+    description: Pipeline Lakeflow Connect de Tracking
+    lookup:
+      pipeline: electrocasa_tracking_ingestion
+
+
 targets:
 
   dev:
+
     mode: development
     default: true
 
     variables:
       catalog: electrocasa_dev
 
+
   prod:
+
     mode: production
 
     variables:
