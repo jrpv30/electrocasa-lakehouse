@@ -18,6 +18,11 @@ resources:
         timezone_id: "America/Lima"
         pause_status: UNPAUSED
 
+      environments:
+        - environment_key: default
+          spec:
+            environment_version: "2"
+
       tasks:
 
         # ====================================================
@@ -26,15 +31,17 @@ resources:
 
         - task_key: copy_into_bronze
 
-          notebook_task:
-            notebook_path: ../notebooks/01_copy_into.py
+          spark_python_task:
+            python_file: ../notebooks/01_copy_into.py
+
+          environment_key: default
 
           max_retries: 1
           min_retry_interval_millis: 60000
 
 
         # ====================================================
-        # 2. TRACKING - LAKEFLOW CONNECT
+        # 2. TRACKING
         # ====================================================
 
         - task_key: tracking_ingestion
@@ -70,11 +77,14 @@ resources:
           depends_on:
             - task_key: pipeline_medallion
 
-          notebook_task:
-            notebook_path: ../notebooks/02_validacion.py
+          spark_python_task:
+            python_file: ../notebooks/02_validacion.py
 
-            base_parameters:
-              catalog: ${var.catalog}
+            parameters:
+              - "--catalog"
+              - "${var.catalog}"
+
+          environment_key: default
 
           max_retries: 1
           min_retry_interval_millis: 60000
